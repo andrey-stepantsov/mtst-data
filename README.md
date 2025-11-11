@@ -2,7 +2,7 @@
 
 The original PDF document contains various tables that are structured using whitespace alignment. These tables may not have explicit borders or gridlines, making them challenging to extract using traditional methods. The goal is to accurately extract these tables while preserving their structure and content.
 
-Each document contains a series of tables that are separated by general title rows, whitespace rows, rows contaning timesamps, page numbering rows, and two different types of subtabe header rows.
+Each document contains a series of tables that are separated by general title rows, whitespace rows, rows contaning timestamps, page numbering rows, and two different types of subtable header rows.
 
 ## Subtable header "Cut ordrer" rows
 
