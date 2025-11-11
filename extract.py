@@ -30,105 +30,83 @@ def parse_time_to_seconds(time_str):
         except ValueError:
             return None
 
-def extract_tables_from_pdf(pdf_path):
+def extract_lines_from_pdf(pdf_path):
     """
-    Extracts tables from each page of a PDF file using pdfplumber.
+    Extracts text lines from each page of a PDF, preserving layout.
+    Returns a single flat list of all text lines.
     """
-    print(f"Extracting tables from: {pdf_path}")
-    all_extracted_tables = []
+    print(f"Extracting text lines from: {pdf_path}")
+    all_lines = []
     try:
         with pdfplumber.open(pdf_path) as pdf:
             for i, page in enumerate(pdf.pages):
                 print(f"Processing page {i+1}...")
-                table_settings = {
-                    "vertical_strategy": "text",
-                    "horizontal_strategy": "text",
-                }
-                tables = page.extract_tables(table_settings)
-                if tables:
-                    # Add all tables found on the page to our list
-                    all_extracted_tables.extend(tables)
-                else:
-                    print(f"No tables found on page {i+1}.")
+                # Using extract_text_lines with layout=True is key.
+                # It preserves horizontal spacing, which helps differentiate columns.
+                page_lines = page.extract_text_lines(layout=True, strip=True)
+                for line in page_lines:
+                    all_lines.append(line['text'])
     except Exception as e:
         print(f"An error occurred during extraction: {e}")
-    return all_extracted_tables
+    return all_lines
 
-def get_row_string(raw_row):
-    """Strips and joins all items in a raw row to form a single string."""
-    if not raw_row:
-        return ""
-    return " ".join(item.strip() for item in raw_row if item and item.strip())
-
-def clean_row(row):
+def clean_row(items):
     """
-    Cleans a single row of data by removing empty items and merging known split-item patterns.
+    Cleans a list of string items by merging known multi-part patterns.
+    This version builds a new list, which is safer and cleaner.
     """
-    # 1. Basic cleaning: remove None, strip whitespace, filter empty strings
-    items = [item.strip() for item in row if item and item.strip()]
     if not items:
         return []
 
-    # 2. Iteratively merge known split patterns.
-    # A while loop is used because we are modifying the list as we iterate.
+    new_items = []
     i = 0
-    while i < len(items) - 1:
-        current = items[i]
-        next_item = items[i+1]
+    time_pattern = re.compile(r"^(?:\d{1,2}:)?\d{2}\.\d{2}$")
 
-        # Merge pattern: Event name split across two cells (e.g., "50 FR", "SCY")
-        if next_item in ("SCY", "SCM", "LCM") and any(char.isalpha() for char in current):
-            items[i] = f"{current} {next_item}"
-            items.pop(i+1)
-            continue  # Re-check the newly merged item against the next one
+    while i < len(items):
+        # Merge pattern: Event name split across three cells (e.g., "50", "FR", "SCY")
+        if (i + 2 < len(items) and
+                items[i].isdigit() and
+                items[i+1] in ("FR", "BK", "BR", "FL", "IM") and
+                items[i+2] in ("SCY", "SCM", "LCM")):
+            new_items.append(f"{items[i]} {items[i+1]} {items[i+2]}")
+            i += 3
+            continue
 
         # Merge pattern: Time split across two cells (e.g., "2", ":17.99")
-        if current.isdigit() and next_item.startswith(':'):
-            items[i] = current + next_item
-            items.pop(i+1)
+        if i + 1 < len(items) and items[i].isdigit() and items[i+1].startswith(':'):
+            new_items.append(items[i] + items[i+1])
+            i += 2
             continue
 
         # Merge pattern: Time followed by a "*"
-        if next_item == '*':
-            items[i] = f"{current} *"
-            items.pop(i+1)
+        if i + 1 < len(items) and time_pattern.match(items[i]) and items[i+1] == '*':
+            new_items.append(f"{items[i]} *")
+            i += 2
             continue
-
-        # Merge pattern: "10", "&", "under"
-        if current == "10" and next_item == "&" and i + 2 < len(items) and items[i+2] == "under":
-            items[i] = "10 & under"
-            items.pop(i+1)
-            items.pop(i+1)
-            continue
-
-        # Merge pattern: Age and Gender (e.g., "10", "Girls" or "11-12", "Boys")
-        age_pattern = re.compile(r"^\d+(?:-\d+)?$") # Matches "10", "11-12"
-        if (age_pattern.match(current) or current == "10 & under") and next_item in ("Girls", "Boys"):
-            items[i] = f"{current} {next_item}"
-            items.pop(i+1)
-            continue
-
+        
+        # If no pattern matches, just append the current item.
+        new_items.append(items[i])
         i += 1
-    return items
+    return new_items
 
-def is_whitespace_row(raw_row):
-    """Checks if a row is effectively empty."""
-    return not any(item and item.strip() for item in raw_row)
+def is_whitespace_row(line_text):
+    """Checks if a line string is effectively empty."""
+    return not line_text.strip()
 
-def is_general_title_row(raw_row):
+def is_general_title_row(line_text):
     """Checks for the main title string in a raw row."""
-    row_str = get_row_string(raw_row)
+    row_str = line_text
     return "USA Swimming 2024-2028 Motivational Standards" in row_str
 
-def is_timestamp_row(raw_row):
+def is_timestamp_row(line_text):
     """Checks for a timestamp string in a raw row."""
-    row_str = get_row_string(raw_row)
+    row_str = line_text
     timestamp_pattern = r"\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}:\d{2} (AM|PM)"
     return re.search(timestamp_pattern, row_str) is not None
 
-def is_page_number_row(raw_row):
+def is_page_number_row(line_text):
     """Checks for a page number string in a raw row."""
-    row_str = get_row_string(raw_row)
+    row_str = line_text
     page_pattern = r"Page \d+ of \d+"
     return re.search(page_pattern, row_str) is not None
 
@@ -143,23 +121,22 @@ def is_cut_order_header_row(cleaned_row):
     return cleaned_row == expected_with_event or cleaned_row == expected_without_event
 
 
-def parse_age_gender_header(raw_row):
+def parse_age_gender_header(line_text):
     """
-    Parses a raw row to see if it's an age/gender header.
+    Parses a line string to see if it's an age/gender header.
     If it is, returns (left_context, right_context). Otherwise, (None, None).
-    Example format: "10 Girls Event 10 Boys"
+    Example format: "10 Girls      Event      10 Boys"
     """
-    row_str = get_row_string(raw_row)
-    age_gender_pattern = r"(\d+ & under|\d+-\d+|\d+) (Girls|Boys)"
+    # This pattern is more flexible about the spacing around "Event"
+    age_gender_pattern = r"(\d+ & under|\d+-\d+|\d+)\s+(Girls|Boys)"
+    full_pattern = re.compile(f"^{age_gender_pattern}\s+Event\s+{age_gender_pattern}$")
     
-    # Regex to find two age/gender groups separated by "Event"
-    full_pattern = re.compile(f"^({age_gender_pattern}) Event ({age_gender_pattern})$")
-    
-    match = full_pattern.match(row_str)
+    match = full_pattern.match(line_text.strip())
     if match:
-        # group(1) is the full left part (e.g., "10 Girls")
-        # group(4) is the full right part (e.g., "10 Boys")
-        return match.group(1), match.group(4)
+        # Reconstruct the full context strings
+        left_context = f"{match.group(1)} {match.group(2)}"
+        right_context = f"{match.group(3)} {match.group(4)}"
+        return left_context, right_context
         
     return None, None
 
@@ -205,10 +182,10 @@ def is_data_row(row):
             
     return True, None
 
-def parse_and_structure_data(raw_tables):
+def parse_and_structure_data(text_lines):
     """
-    Takes raw extracted tables, cleans them, and builds a structured list of data records.
-    Each record contains the age/gender context and the standards for an event.
+    Takes a list of raw text lines, classifies each line, and builds a
+    structured list of data records.
     """
     print("\n--- Parsing and Structuring Data ---")
     structured_data = []
@@ -217,68 +194,65 @@ def parse_and_structure_data(raw_tables):
     # State variables to hold the current context
     left_context, right_context = None, None
 
-    for table_idx, table in enumerate(raw_tables):
-        for row_idx, raw_row in enumerate(table):
-            # 1. Check for junk rows on the raw row first.
-            if is_whitespace_row(raw_row) or \
-               is_general_title_row(raw_row) or \
-               is_timestamp_row(raw_row) or \
-               is_page_number_row(raw_row):
+    for line_idx, line_text in enumerate(text_lines):
+        # 1. Check for junk rows on the raw line string.
+        if is_whitespace_row(line_text) or \
+           is_general_title_row(line_text) or \
+           is_timestamp_row(line_text) or \
+           is_page_number_row(line_text):
+            continue
+
+        # 2. Check for age/gender header on the raw line string.
+        new_left, new_right = parse_age_gender_header(line_text)
+        if new_left:
+            left_context, right_context = new_left, new_right
+            print(f"Context updated: {left_context} | {right_context}")
+            continue
+
+        # 3. If not a junk/context row, split into items and clean them.
+        items = line_text.split()
+        cleaned = clean_row(items)
+
+        if not cleaned:
+            continue
+
+        # 4. Check for the "Cut order" header on the cleaned row.
+        if is_cut_order_header_row(cleaned):
+            continue
+
+        # 5. Process as a potential data row.
+        is_valid_data, reason = is_data_row(cleaned)
+        if is_valid_data:
+            if not left_context or not right_context:
+                reason = "Data row found without age/gender context"
+                flagged_rows.append((cleaned, reason, line_idx + 1))
                 continue
+            
+            event = cleaned[6]
+            
+            left_standards = {label: time for label, time in zip(CUT_ORDER_LABELS_LEFT, cleaned[:6]) if time}
+            if left_standards:
+                structured_data.append({
+                    "age_gender_group": left_context,
+                    "event": event,
+                    "standards": left_standards
+                })
 
-            # 2. Check for age/gender header on the raw row.
-            new_left, new_right = parse_age_gender_header(raw_row)
-            if new_left:
-                left_context, right_context = new_left, new_right
-                print(f"Context updated: {left_context} | {right_context}")
-                continue
-
-            # 3. If it's not a junk or context row, perform full cleaning.
-            cleaned = clean_row(raw_row)
-
-            # After cleaning, the row might be empty.
-            if not cleaned:
-                continue
-
-            # 4. Check for the "Cut order" header on the cleaned row.
-            if is_cut_order_header_row(cleaned):
-                continue
-
-            # 5. Process as a potential data row.
-            is_valid_data, reason = is_data_row(cleaned)
-            if is_valid_data:
-                if not left_context or not right_context:
-                    reason = "Data row found without age/gender context"
-                    flagged_rows.append((cleaned, reason, table_idx, row_idx))
-                    continue
-                
-                event = cleaned[6]
-                
-                # Create record for the left context (e.g., Girls)
-                left_standards = {label: time for label, time in zip(CUT_ORDER_LABELS_LEFT, cleaned[:6]) if time}
-                if left_standards:
-                    structured_data.append({
-                        "age_gender_group": left_context,
-                        "event": event,
-                        "standards": left_standards
-                    })
-
-                # Create record for the right context (e.g., Boys)
-                right_standards = {label: time for label, time in zip(CUT_ORDER_LABELS_RIGHT, cleaned[7:]) if time}
-                if right_standards:
-                    structured_data.append({
-                        "age_gender_group": right_context,
-                        "event": event,
-                        "standards": right_standards
-                    })
-            else:
-                # It's not a header, not data, not junk we know about. Flag it.
-                flagged_rows.append((cleaned, reason, table_idx, row_idx))
+            right_standards = {label: time for label, time in zip(CUT_ORDER_LABELS_RIGHT, cleaned[7:]) if time}
+            if right_standards:
+                structured_data.append({
+                    "age_gender_group": right_context,
+                    "event": event,
+                    "standards": right_standards
+                })
+        else:
+            # It's not a header, not data, not junk we know about. Flag it.
+            flagged_rows.append((cleaned, reason, line_idx + 1))
 
     if flagged_rows:
         print("\n--- Flagged Rows for Review ---")
-        for row, reason, table_idx, row_idx in flagged_rows:
-            print(f"Table {table_idx+1}, Row {row_idx+1}: {row} - Reason: {reason}")
+        for row, reason, line_num in flagged_rows:
+            print(f"Line {line_num}: {row} - Reason: {reason}")
 
     return structured_data
 
