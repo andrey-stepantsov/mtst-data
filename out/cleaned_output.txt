@@ -60,9 +60,4 @@ Line 469: ['USA', 'Swimming', '2024-2028', 'Single', 'Age', 'Motivational', 'Sta
 Line 509: ['USA', 'Swimming', '2024-2028', 'Single', 'Age', 'Motivational', 'Standards'] - Reason: Incorrect number of columns
 
 --- Found 894 structured data records ---
-{'age_gender_group': '10 Girls', 'event': '50 FR SCY', 'standards': {'B': '39.89 *', 'BB': '36.09 *', 'A': '32.19 *', 'AA': '30.89 *', 'AAA': '29.69 *', 'AAAA': '28.39 *'}}
-{'age_gender_group': '10 Boys', 'event': '50 FR SCY', 'standards': {'AAAA': '27.59 *', 'AAA': '28.79 *', 'AA': '29.99 *', 'A': '31.19 *', 'BB': '34.79 *', 'B': '38.29 *'}}
-{'age_gender_group': '10 Girls', 'event': '100 FR SCY', 'standards': {'B': '1:30.89 *', 'BB': '1:21.19 *', 'A': '1:11.49 *', 'AA': '1:08.29 *', 'AAA': '1:05.09 *', 'AAAA': '1:01.89 *'}}
-{'age_gender_group': '10 Boys', 'event': '100 FR SCY', 'standards': {'AAAA': '1:01.09 *', 'AAA': '1:04.09 *', 'AA': '1:07.19 *', 'A': '1:10.19 *', 'BB': '1:19.29 *', 'B': '1:28.49 *'}}
-{'age_gender_group': '10 Girls', 'event': '200 FR SCY', 'standards': {'B': '3:22.79 *', 'BB': '3:00.59 *', 'A': '2:38.39 *', 'AA': '2:30.99 *', 'AAA': '2:23.59 *', 'AAAA': '2:16.19 *'}}
-... and 889 more records.
+Successfully wrote 894 records to out/2028-motivational-standards-single-age.json
