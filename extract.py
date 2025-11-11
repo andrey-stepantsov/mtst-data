@@ -2,6 +2,7 @@ import re
 import pdfplumber
 import json
 import argparse
+import logging
 
 # These are the standard names for the columns, based on the "Cut order" header.
 CUT_ORDER_LABELS_LEFT = ["B", "BB", "A", "AA", "AAA", "AAAA"]
@@ -37,19 +38,19 @@ def extract_lines_from_pdf(pdf_path):
     Extracts text lines from each page of a PDF, preserving layout.
     Returns a single flat list of all text lines.
     """
-    print(f"Extracting text lines from: {pdf_path}")
+    logging.info(f"Extracting text lines from: {pdf_path}")
     all_lines = []
     try:
         with pdfplumber.open(pdf_path) as pdf:
             for i, page in enumerate(pdf.pages):
-                print(f"Processing page {i+1}...")
+                logging.info(f"Processing page {i+1}...")
                 # Using extract_text_lines with layout=True is key.
                 # It preserves horizontal spacing, which helps differentiate columns.
                 page_lines = page.extract_text_lines(layout=True, strip=True)
                 for line in page_lines:
                     all_lines.append(line['text'])
     except Exception as e:
-        print(f"An error occurred during extraction: {e}")
+        logging.error(f"An error occurred during extraction: {e}")
     return all_lines
 
 def clean_row(items):
@@ -194,7 +195,7 @@ def parse_and_structure_data(text_lines):
     Takes a list of raw text lines, classifies each line, and builds a
     structured list of data records.
     """
-    print("\n--- Parsing and Structuring Data ---")
+    logging.info("\n--- Parsing and Structuring Data ---")
     structured_data = []
     flagged_rows = []
     
@@ -223,7 +224,7 @@ def parse_and_structure_data(text_lines):
         new_left, new_right = parse_age_gender_header(line_text)
         if new_left:
             left_context, right_context = new_left, new_right
-            print(f"Context updated: {left_context} | {right_context}")
+            logging.info(f"Context updated: {left_context} | {right_context}")
             i += 1
             continue
 
@@ -303,9 +304,9 @@ def parse_and_structure_data(text_lines):
         i += 1 # Main loop increment
 
     if flagged_rows:
-        print("\n--- Flagged Rows for Review ---")
+        logging.warning("\n--- Flagged Rows for Review ---")
         for row, reason, line_num in flagged_rows:
-            print(f"Line {line_num}: {row} - Reason: {reason}")
+            logging.warning(f"Line {line_num}: {row} - Reason: {reason}")
 
     return structured_data
 
@@ -316,7 +317,13 @@ def main():
     parser = argparse.ArgumentParser(description="Extract motivational standards from a USA Swimming PDF.")
     parser.add_argument("input_pdf", help="Path to the input PDF file.")
     parser.add_argument("output_json", help="Path for the output JSON file.")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output for debugging.")
     args = parser.parse_args()
+
+    # Configure logging
+    log_level = logging.INFO if args.verbose else logging.WARNING
+    # Use a basic format that doesn't include the log level name for cleaner output
+    logging.basicConfig(level=log_level, format='%(message)s')
 
     text_lines = extract_lines_from_pdf(pdf_path=args.input_pdf)
     
