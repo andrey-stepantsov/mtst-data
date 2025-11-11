@@ -134,3 +134,53 @@ def test_parse_and_structure_data():
 
     structured_data = parse_and_structure_data(sample_lines)
     assert structured_data == expected_data
+
+def test_parse_and_structure_data_age_group():
+    """
+    Tests the parsing and structuring of data from the age-group PDF format,
+    including split relay event rows.
+    """
+    sample_lines = [
+        "USA Swimming 2024-2028 Motivational Standards",  # Title
+        "11-12 Girls      Event      11-12 Boys",  # Context
+        "B BB A AA AAA AAAA Event AAAA AAA AA A BB B",  # Cut order header
+        # Standard individual event row
+        "35.59 33.29 30.99 29.89 28.79 27.59 50 FR SCY 27.59 28.79 29.99 31.19 33.59 35.99",
+        # Split relay event row
+        "2:41.19 * 2:29.69 * 2:18.19 * 2:12.39 * 2:06.69 * 2:00.89 * 200 MED-R 1:55.59 * 2:01.09 * 2:06.59 * 2:12.09 * 2:23.09 * 2:34.09 *",
+        "SCY",
+    ]
+
+    expected_data = [
+        {
+            "age": "11-12", "gender": "Girls", "event": "50 FR SCY",
+            "standards": {
+                "B": "35.59", "BB": "33.29", "A": "30.99",
+                "AA": "29.89", "AAA": "28.79", "AAAA": "27.59"
+            }
+        },
+        {
+            "age": "11-12", "gender": "Boys", "event": "50 FR SCY",
+            "standards": {
+                "AAAA": "27.59", "AAA": "28.79", "AA": "29.99",
+                "A": "31.19", "BB": "33.59", "B": "35.99"
+            }
+        },
+        {
+            "age": "11-12", "gender": "Girls", "event": "200 MED-R SCY",
+            "standards": {
+                "B": "2:41.19 *", "BB": "2:29.69 *", "A": "2:18.19 *",
+                "AA": "2:12.39 *", "AAA": "2:06.69 *", "AAAA": "2:00.89 *"
+            }
+        },
+        {
+            "age": "11-12", "gender": "Boys", "event": "200 MED-R SCY",
+            "standards": {
+                "AAAA": "1:55.59 *", "AAA": "2:01.09 *", "AA": "2:06.59 *",
+                "A": "2:12.09 *", "BB": "2:23.09 *", "B": "2:34.09 *"
+            }
+        }
+    ]
+
+    structured_data = parse_and_structure_data(sample_lines)
+    assert structured_data == expected_data
