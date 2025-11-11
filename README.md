@@ -16,9 +16,11 @@ This row indicates the reader the values to the left of the "Event" column will 
 
 The "Age and Gender" header row contains information about the age and gender of the atheletes for which data provided in the following data rows. The age could be described either by a number, a dash separated number pair, or a text value of "10 & under". The gender is indicated by words "Girls" or "Boys". Examples of such header rows include:
 
-- "10 & under Girls, 10 & under Boys"
-- "11-12 Girls, 11-12 Boys"
-- "11 Girls, 11 Boys"
+- "10 & under Girls 10 & under Boys"
+- "11-12 Girls 11-12 Boys"
+- "11 Girls 11 Boys"
+
+The white space in the above examples can be one or more space characters.
 
 The dash separated pairs are used a file where age groups that span multiple years, while single numbers are used for single-year age groups.
 
