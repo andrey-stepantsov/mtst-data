@@ -1,5 +1,6 @@
 import re
 import pdfplumber
+import json
 
 # These are the standard names for the columns, based on the "Cut order" header.
 CUT_ORDER_LABELS_LEFT = ["B", "BB", "A", "AA", "AAA", "AAAA"]
@@ -96,7 +97,7 @@ def is_whitespace_row(line_text):
 def is_general_title_row(line_text):
     """Checks for the main title string in a raw row."""
     row_str = line_text
-    return "USA Swimming 2024-2028 Motivational Standards" in row_str
+    return "USA Swimming 2024-2028 Single Age Motivational Standards" in row_str
 
 def is_timestamp_row(line_text):
     """Checks for a timestamp string in a raw row."""
@@ -258,15 +259,18 @@ def parse_and_structure_data(text_lines):
 
 if __name__ == "__main__":
     pdf_file_path = "data/2028-motivational-standards-single-age.pdf"
+    output_json_path = "out/2028-motivational-standards-single-age.json"
+    
     text_lines = extract_lines_from_pdf(pdf_path=pdf_file_path)
     
     if text_lines:
         structured_data = parse_and_structure_data(text_lines)
         print(f"\n--- Found {len(structured_data)} structured data records ---")
         
-        # Example of how to print the structured data
-        for record in structured_data[:5]: # Print first 5 records as a sample
-            print(record)
-        
-        if len(structured_data) > 5:
-            print(f"... and {len(structured_data) - 5} more records.")
+        # Write the structured data to a JSON file
+        try:
+            with open(output_json_path, 'w') as f:
+                json.dump(structured_data, f, indent=4)
+            print(f"Successfully wrote {len(structured_data)} records to {output_json_path}")
+        except Exception as e:
+            print(f"An error occurred while writing to JSON file: {e}")
