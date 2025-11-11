@@ -133,8 +133,14 @@ def is_page_number_row(raw_row):
     return re.search(page_pattern, row_str) is not None
 
 def is_cut_order_header_row(cleaned_row):
-    expected_cut_order = ["B", "BB", "A", "AA", "AAA", "AAAA", "Event", "AAAA", "AAA", "AA", "A", "BB", "B"]
-    return cleaned_row == expected_cut_order
+    """
+    Checks if a cleaned row is a "Cut order" header.
+    It can be a 13-element list with "Event" or a 12-element list without it.
+    """
+    expected_with_event = ["B", "BB", "A", "AA", "AAA", "AAAA", "Event", "AAAA", "AAA", "AA", "A", "BB", "B"]
+    expected_without_event = ["B", "BB", "A", "AA", "AAA", "AAAA", "AAAA", "AAA", "AA", "A", "BB", "B"]
+    
+    return cleaned_row == expected_with_event or cleaned_row == expected_without_event
 
 
 def parse_age_gender_header(raw_row):
