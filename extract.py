@@ -67,7 +67,7 @@ def clean_row(items):
         # Merge pattern: Event name split across three cells (e.g., "50", "FR", "SCY")
         if (i + 2 < len(items) and
                 items[i].isdigit() and
-                items[i+1] in ("FR", "BK", "BR", "FL", "IM") and
+                items[i+1] in ("FR", "BK", "BR", "FL", "IM", "FR-R", "MED-R") and
                 items[i+2] in ("SCY", "SCM", "LCM")):
             new_items.append(f"{items[i]} {items[i+1]} {items[i+2]}")
             i += 3
@@ -102,7 +102,7 @@ def is_whitespace_row(line_text):
 def is_general_title_row(line_text):
     """Checks for the main title string in a raw row."""
     row_str = line_text
-    return "USA Swimming 2024-2028 Single Age Motivational Standards" in row_str
+    return "USA Swimming" in line_text and "Motivational Standards" in line_text
 
 def is_timestamp_row(line_text):
     """Checks for a timestamp string in a raw row."""
@@ -156,7 +156,7 @@ def is_data_row(row):
 
     # Check event format
     event = row[6]
-    event_pattern = re.compile(r'^\d{2,4}\s+(FR|BK|BR|FL|IM)\s+(SCY|SCM|LCM)$')
+    event_pattern = re.compile(r'^\d{2,4}\s+(FR|BK|BR|FL|IM|FR-R|MED-R)\s+(SCY|SCM|LCM)$')
     if not event_pattern.match(event):
         return False, f"Invalid event format: {event}"
 
