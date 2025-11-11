@@ -129,7 +129,7 @@ def parse_age_gender_header(line_text):
     """
     # This pattern is more flexible about the spacing around "Event"
     age_gender_pattern = r"(\d+ & under|\d+-\d+|\d+)\s+(Girls|Boys)"
-    full_pattern = re.compile(f"^{age_gender_pattern}\s+Event\s+{age_gender_pattern}$")
+    full_pattern = re.compile(rf"^{age_gender_pattern}\s+(?:Event\s+)?{age_gender_pattern}$")
     
     match = full_pattern.match(line_text.strip())
     if match:
@@ -159,7 +159,7 @@ def is_data_row(row):
     time_columns = standards_left + standards_right
 
     # Check time format
-    time_pattern = re.compile(r'^(?:\d{1,2}:)?\d{2}\.\d{2}(?:\s+\*)?$')
+    time_pattern = re.compile(r'^(?:\d{1,2}:)?\d{2}\.\d{2}(?:\s*\*)?$')
     for item in time_columns:
         if item and not time_pattern.match(item):
             return False, f"Invalid time format in standards column: {item}"
