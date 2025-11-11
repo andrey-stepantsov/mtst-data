@@ -201,12 +201,22 @@ def parse_and_structure_data(text_lines):
     # State variables to hold the current context
     left_context, right_context = None, None
 
-    for line_idx, line_text in enumerate(text_lines):
+    i = 0
+    while i < len(text_lines):
+        line_text = text_lines[i]
+
         # 1. Check for junk rows on the raw line string.
-        if is_whitespace_row(line_text) or \
-           is_general_title_row(line_text) or \
-           is_timestamp_row(line_text) or \
-           is_page_number_row(line_text):
+        if is_whitespace_row(line_text):
+            i += 1
+            continue
+        if is_general_title_row(line_text):
+            i += 1
+            continue
+        if is_timestamp_row(line_text):
+            i += 1
+            continue
+        if is_page_number_row(line_text):
+            i += 1
             continue
 
         # 2. Check for age/gender header on the raw line string.
@@ -214,6 +224,7 @@ def parse_and_structure_data(text_lines):
         if new_left:
             left_context, right_context = new_left, new_right
             print(f"Context updated: {left_context} | {right_context}")
+            i += 1
             continue
 
         # 3. If not a junk/context row, split into items and clean them.
@@ -221,10 +232,36 @@ def parse_and_structure_data(text_lines):
         cleaned = clean_row(items)
 
         if not cleaned:
+            i += 1
             continue
+
+        # --- START: New logic to handle split relay rows ---
+        # A split relay row's first part is expected to have 6 standards left,
+        # 2 event parts (distance and type), and 6 standards right, totaling 14 elements.
+        is_split_relay_part1 = (
+            len(cleaned) == 14 and
+            cleaned[6].isdigit() and
+            cleaned[7] in ("FR-R", "MED-R")
+        )
+
+        if is_split_relay_part1 and i + 1 < len(text_lines):
+            next_line_text = text_lines[i+1]
+            cleaned_next_row = clean_row(next_line_text.split())
+            if len(cleaned_next_row) == 1 and cleaned_next_row[0] in ("SCY", "SCM", "LCM"):
+                course = cleaned_next_row[0]
+                event_str = f"{cleaned[6]} {cleaned[7]} {course}"
+                
+                # Reconstruct the row with the merged event
+                # This combines the distance and type at indices 6 and 7 with the course.
+                # The result will be a 13-element row, matching is_data_row's expectation.
+                merged_row = cleaned[:6] + [event_str] + cleaned[8:]
+                cleaned = merged_row
+                i += 1 # Increment to skip the course line we just consumed
+        # --- END: New logic ---
 
         # 4. Check for the "Cut order" header on the cleaned row.
         if is_cut_order_header_row(cleaned):
+            i += 1
             continue
 
         # 5. Process as a potential data row.
@@ -232,7 +269,8 @@ def parse_and_structure_data(text_lines):
         if is_valid_data:
             if not left_context or not right_context:
                 reason = "Data row found without age/gender context"
-                flagged_rows.append((cleaned, reason, line_idx + 1))
+                flagged_rows.append((cleaned, reason, i + 1))
+                i += 1
                 continue
             
             event = cleaned[6]
@@ -260,7 +298,9 @@ def parse_and_structure_data(text_lines):
                 })
         else:
             # It's not a header, not data, not junk we know about. Flag it.
-            flagged_rows.append((cleaned, reason, line_idx + 1))
+            flagged_rows.append((cleaned, reason, i + 1))
+        
+        i += 1 # Main loop increment
 
     if flagged_rows:
         print("\n--- Flagged Rows for Review ---")
