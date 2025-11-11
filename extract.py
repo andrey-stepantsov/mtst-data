@@ -258,10 +258,10 @@ def parse_and_structure_data(text_lines):
 
 if __name__ == "__main__":
     pdf_file_path = "data/2028-motivational-standards-single-age.pdf"
-    raw_tables = extract_tables_from_pdf(pdf_path=pdf_file_path)
+    text_lines = extract_lines_from_pdf(pdf_path=pdf_file_path)
     
-    if raw_tables:
-        structured_data = parse_and_structure_data(raw_tables)
+    if text_lines:
+        structured_data = parse_and_structure_data(text_lines)
         print(f"\n--- Found {len(structured_data)} structured data records ---")
         
         # Example of how to print the structured data
