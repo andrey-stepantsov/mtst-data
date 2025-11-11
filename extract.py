@@ -1,6 +1,7 @@
 import re
 import pdfplumber
 import json
+import argparse
 
 # These are the standard names for the columns, based on the "Cut order" header.
 CUT_ORDER_LABELS_LEFT = ["B", "BB", "A", "AA", "AAA", "AAAA"]
@@ -268,11 +269,16 @@ def parse_and_structure_data(text_lines):
 
     return structured_data
 
-if __name__ == "__main__":
-    pdf_file_path = "data/2028-motivational-standards-single-age.pdf"
-    output_json_path = "out/2028-motivational-standards-single-age.json"
-    
-    text_lines = extract_lines_from_pdf(pdf_path=pdf_file_path)
+def main():
+    """
+    Main function to parse command-line arguments and run the extraction process.
+    """
+    parser = argparse.ArgumentParser(description="Extract motivational standards from a USA Swimming PDF.")
+    parser.add_argument("input_pdf", help="Path to the input PDF file.")
+    parser.add_argument("output_json", help="Path for the output JSON file.")
+    args = parser.parse_args()
+
+    text_lines = extract_lines_from_pdf(pdf_path=args.input_pdf)
     
     if text_lines:
         structured_data = parse_and_structure_data(text_lines)
@@ -280,8 +286,11 @@ if __name__ == "__main__":
         
         # Write the structured data to a JSON file
         try:
-            with open(output_json_path, 'w') as f:
+            with open(args.output_json, 'w') as f:
                 json.dump(structured_data, f, indent=4)
-            print(f"Successfully wrote {len(structured_data)} records to {output_json_path}")
+            print(f"Successfully wrote {len(structured_data)} records to {args.output_json}")
         except Exception as e:
             print(f"An error occurred while writing to JSON file: {e}")
+
+if __name__ == "__main__":
+    main()
