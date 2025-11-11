@@ -18,7 +18,6 @@ Processing page 14...
 
 --- Flagged Rows for Review ---
 Table 1, Row 1: ['U', 'SA Swi', 'mming', '2024-', '2028', 'Single Ag', 'e Moti', 'vation', 'al Stan', 'dards'] - Reason: Incorrect number of columns
-Table 1, Row 5: ['B', 'BB', 'A', 'AA', 'AAA', 'AAAA', 'AAAA', 'AAA', 'AA', 'A', 'BB', 'B'] - Reason: Incorrect number of columns
 Table 1, Row 7: ['10 G', 'irls', 'Event', '10 B', 'oys'] - Reason: Incorrect number of columns
 Table 1, Row 9: ['39.89 *', '36.09 *', '32.19 *', '30.89 *', '29.69 *', '28.39 *', '50 FR SCY', '27.59 *', '28.79 *', '29.99 *', '31.19 *', '34.79 *', '38.29 *'] - Reason: Data row found without age/gender context
 Table 1, Row 11: ['1:30.89 *', '1:21.19 *', '1:11.49 *', '1:08.29 *', '1:05.09 *', '1:01.89 *', '100 FR SCY', '1:01.09 *', '1:04.09 *', '1:07.19 *', '1:10.19 *', '1:19.29 *', '1:28.49'] - Reason: Data row found without age/gender context
@@ -53,7 +52,6 @@ Table 1, Row 67: ['3:12.79 *', '2:58.99 *', '2:45.19 *', '2:38.39 *', '2:31.49 *
 Table 1, Row 69: ['6:52.09 *', '6:22.69 *', '5:53.29 *', '5:38.49 *', '5:23.79 *', '5:09.09 *', '400 IM SCY', '5:01.19 *', '5:15.49 *', '5:29.79 *', '5:44.19 *', '6:12.79 *', '6:41.49'] - Reason: Data row found without age/gender context
 Table 2, Row 1: ['U', 'SA S', 'wi', 'mmi', 'ng', '202', '4-', '2028', 'Single Ag', 'e Mo', 'ti', 'vatio', 'n', 'al St', 'an', 'dard', 's'] - Reason: Incorrect number of columns
 Table 2, Row 3: ['10/10/20', '25', '12:58:55', 'AM'] - Reason: Incorrect number of columns
-Table 2, Row 5: ['B', 'BB', 'A', 'AA', 'AAA', 'AAAA', 'AAAA', 'AAA', 'AA', 'A', 'BB', 'B'] - Reason: Incorrect number of columns
 Table 2, Row 7: ['1', '2 G', 'irls', 'Event', '12', 'B', 'oys'] - Reason: Incorrect number of columns
 Table 2, Row 9: ['34.09 *', '31.69 *', '29.39 *', '28.19 *', '26.99 *', '25.79 *', '50 FR SCY', '24.59 *', '25.79 *', '26.99 *', '28.09 *', '30.49 *', '32.79 *'] - Reason: Data row found without age/gender context
 Table 2, Row 11: ['1:14.69 *', '1:09.39 *', '1:04.09 *', '1:01.39 *', '58.69 *', '56.09 *', '100 FR SCY', '53.69 *', '56.19 *', '58.79 *', '1:01.29 *', '1:06.39 *', '1:11.49 *'] - Reason: Data row found without age/gender context
@@ -93,7 +91,6 @@ Table 2, Row 77: ['2:56.69 *', '2:44.09 *', '2:31.39 *', '2:25.09 *', '2:18.79 *
 Table 2, Row 79: ['6:14.09 *', '5:47.39 *', '5:20.69 *', '5:07.29 *', '4:53.99 *', '4:40.59 *', '400 IM SCY', '4:24.59 *', '4:37.19 *', '4:49.79 *', '5:02.39 *', '5:27.59 *', '5:52.79 *'] - Reason: Data row found without age/gender context
 Table 3, Row 1: ['U', 'SA S', 'wi', 'mmi', 'ng', '202', '4-', '2028', 'Single Ag', 'e Mo', 'ti', 'vatio', 'n', 'al St', 'an', 'dard', 's'] - Reason: Incorrect number of columns
 Table 3, Row 3: ['10/10/20', '25', '12:58:55', 'AM'] - Reason: Incorrect number of columns
-Table 3, Row 5: ['B', 'BB', 'A', 'AA', 'AAA', 'AAAA', 'AAAA', 'AAA', 'AA', 'A', 'BB', 'B'] - Reason: Incorrect number of columns
 Table 3, Row 7: ['1', '4 G', 'irls', 'Event', '14', 'B', 'oys'] - Reason: Incorrect number of columns
 Table 3, Row 9: ['32.69 *', '30.39 *', '27.99', '26.89 *', '25.69', '24.49', '50 FR SCY', '22.39 *', '23.49 *', '24.59', '25.59 *', '27.69 *', '29.89 *'] - Reason: Data row found without age/gender context
 Table 3, Row 11: ['1:10.99 *', '1:05.89 *', '1:00.89 *', '58.29 *', '55.79 *', '53.29 *', '100 FR SCY', '48.79 *', '51.19 *', '53.49 *', '55.79 *', '1:00.39 *', '1:05.09 *'] - Reason: Data row found without age/gender context
@@ -132,7 +129,6 @@ Table 3, Row 75: ['2:48.89 *', '2:36.89 *', '2:24.79 *', '2:18.79 *', '2:12.69 *
 Table 3, Row 77: ['6:02.79 *', '5:36.89 *', '5:10.99 *', '4:57.99 *', '4:45.09 *', '4:32.09 *', '400 IM SCY', '4:08.69 *', '4:20.49 *', '4:32.39 *', '4:44.19 *', '5:07.89 *', '5:31.59 *'] - Reason: Data row found without age/gender context
 Table 4, Row 1: ['U', 'SA S', 'wi', 'mmi', 'ng', '202', '4-', '2028', 'Single Ag', 'e Moti', 'vatio', 'n', 'al St', 'an', 'dard', 's'] - Reason: Incorrect number of columns
 Table 4, Row 3: ['10/10/20', '25', '12:58:55', 'AM'] - Reason: Incorrect number of columns
-Table 4, Row 5: ['B', 'BB', 'A', 'AA', 'AAA', 'AAAA', 'AAAA', 'AAA', 'AA', 'A', 'BB', 'B'] - Reason: Incorrect number of columns
 Table 4, Row 7: ['1', '6 G', 'irls', 'Event', '16', 'B', 'oys'] - Reason: Incorrect number of columns
 Table 4, Row 9: ['31.99 *', '29.69 *', '27.39', '26.29 *', '25.09', '23.99 *', '50 FR SCY', '21.39 *', '22.39 *', '23.39 *', '24.39 *', '26.39 *', '28.49 *'] - Reason: Data row found without age/gender context
 Table 4, Row 11: ['1:09.39 *', '1:04.39 *', '59.49 *', '56.99 *', '54.49 *', '51.99', '100 FR SCY', '46.79 *', '48.99 *', '51.29 *', '53.49 *', '57.89 *', '1:02.39 *'] - Reason: Data row found without age/gender context
@@ -171,7 +167,6 @@ Table 4, Row 75: ['2:46.19 *', '2:34.29 *', '2:22.39 *', '2:16.49 *', '2:10.59 *
 Table 4, Row 77: ['5:54.09 *', '5:28.79 *', '5:03.49 *', '4:50.89 *', '4:38.19 *', '4:25.59 *', '400 IM SCY', '4:01.49 *', '4:12.99 *', '4:24.49 *', '4:35.99 *', '4:58.99 *', '5:21.99 *'] - Reason: Data row found without age/gender context
 Table 5, Row 1: ['U', 'SA Swi', 'mming', '2024-', '2', '028', 'Single Ag', 'e Moti', 'vation', 'al Stan', 'dards'] - Reason: Incorrect number of columns
 Table 5, Row 3: ['10/10/2025', '12:58:55 AM'] - Reason: Incorrect number of columns
-Table 5, Row 5: ['B', 'BB', 'A', 'AA', 'AAA', 'AAAA', 'AAAA', 'AAA', 'AA', 'A', 'BB', 'B'] - Reason: Incorrect number of columns
 Table 5, Row 7: ['18 G', 'irls', 'Event', '18 B', 'oys'] - Reason: Incorrect number of columns
 Table 5, Row 9: ['31.49 *', '29.29', '26.99 *', '25.89 *', '24.79', '23.69', '50 FR SCY', '20.69 *', '21.69 *', '22.69 *', '23.69 *', '25.69 *', '27.59 *'] - Reason: Data row found without age/gender context
 Table 5, Row 11: ['1:08.39 *', '1:03.49', '58.59', '56.19 *', '53.79 *', '51.29', '100 FR SCY', '45.49 *', '47.69 *', '49.89 *', '51.99 *', '56.39 *', '1:00.69'] - Reason: Data row found without age/gender context
