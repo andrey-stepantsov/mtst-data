@@ -103,7 +103,7 @@ def is_whitespace_row(line_text):
 def is_general_title_row(line_text):
     """Checks for the main title string in a raw row."""
     row_str = line_text
-    return "USA Swimming" in line_text and "Motivational Standards" in line_text
+    return "motivational" in line_text.lower()
 
 def is_timestamp_row(line_text):
     """Checks for a timestamp string in a raw row."""
