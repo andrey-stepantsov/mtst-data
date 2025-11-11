@@ -54,6 +54,12 @@ def extract_tables_from_pdf(pdf_path):
         print(f"An error occurred during extraction: {e}")
     return all_extracted_tables
 
+def get_row_string(raw_row):
+    """Strips and joins all items in a raw row to form a single string."""
+    if not raw_row:
+        return ""
+    return " ".join(item.strip() for item in raw_row if item and item.strip())
+
 def clean_row(row):
     """
     Cleans a single row of data by removing empty items and merging known split-item patterns.
@@ -105,40 +111,51 @@ def clean_row(row):
         i += 1
     return items
 
-def is_whitespace_row(cleaned_row):
-    return not cleaned_row
+def is_whitespace_row(raw_row):
+    """Checks if a row is effectively empty."""
+    return not any(item and item.strip() for item in raw_row)
 
-def is_general_title_row(cleaned_row):
-    # "USA Swimming 2024-2028 Motivational Standards"
-    if len(cleaned_row) == 1:
-        return "USA Swimming 2024-2028 Motivational Standards" in cleaned_row[0]
-    return False
+def is_general_title_row(raw_row):
+    """Checks for the main title string in a raw row."""
+    row_str = get_row_string(raw_row)
+    return "USA Swimming 2024-2028 Motivational Standards" in row_str
 
-def is_timestamp_row(cleaned_row):
-    # Example: "10/10/2025 12:58:55 AM"
-    if len(cleaned_row) == 1:
-        timestamp_pattern = r"\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}:\d{2} (AM|PM)"
-        return re.fullmatch(timestamp_pattern, cleaned_row[0]) is not None
-    return False
+def is_timestamp_row(raw_row):
+    """Checks for a timestamp string in a raw row."""
+    row_str = get_row_string(raw_row)
+    timestamp_pattern = r"\d{1,2}/\d{1,2}/\d{4} \d{1,2}:\d{2}:\d{2} (AM|PM)"
+    return re.search(timestamp_pattern, row_str) is not None
 
-def is_page_number_row(cleaned_row):
-    # Example: "Page 1 of 14"
-    if len(cleaned_row) == 1:
-        page_pattern = r"Page \d+ of \d+"
-        return re.fullmatch(page_pattern, cleaned_row[0]) is not None
-    return False
+def is_page_number_row(raw_row):
+    """Checks for a page number string in a raw row."""
+    row_str = get_row_string(raw_row)
+    page_pattern = r"Page \d+ of \d+"
+    return re.search(page_pattern, row_str) is not None
 
 def is_cut_order_header_row(cleaned_row):
     expected_cut_order = ["B", "BB", "A", "AA", "AAA", "AAAA", "Event", "AAAA", "AAA", "AA", "A", "BB", "B"]
     return cleaned_row == expected_cut_order
 
-def is_age_gender_header_row(cleaned_row):
-    # Examples from OCR output: ["10 Girls", "Event", "10 Boys"], ["11-12 Girls", "Event", "11-12 Boys"]
-    if len(cleaned_row) == 3 and cleaned_row[1] == "Event":
-        age_gender_pattern = r"(\d+ & under|\d+-\d+|\d+) (Girls|Boys)"
-        if re.fullmatch(age_gender_pattern, cleaned_row[0]) and re.fullmatch(age_gender_pattern, cleaned_row[2]):
-            return True
-    return False
+
+def parse_age_gender_header(raw_row):
+    """
+    Parses a raw row to see if it's an age/gender header.
+    If it is, returns (left_context, right_context). Otherwise, (None, None).
+    Example format: "10 Girls Event 10 Boys"
+    """
+    row_str = get_row_string(raw_row)
+    age_gender_pattern = r"(\d+ & under|\d+-\d+|\d+) (Girls|Boys)"
+    
+    # Regex to find two age/gender groups separated by "Event"
+    full_pattern = re.compile(f"^({age_gender_pattern}) Event ({age_gender_pattern})$")
+    
+    match = full_pattern.match(row_str)
+    if match:
+        # group(1) is the full left part (e.g., "10 Girls")
+        # group(4) is the full right part (e.g., "10 Boys")
+        return match.group(1), match.group(4)
+        
+    return None, None
 
 def is_data_row(row):
     """
@@ -196,24 +213,32 @@ def parse_and_structure_data(raw_tables):
 
     for table_idx, table in enumerate(raw_tables):
         for row_idx, raw_row in enumerate(table):
-            cleaned = clean_row(raw_row)
-
-            # Skip junk rows
-            if is_whitespace_row(cleaned) or \
-               is_general_title_row(cleaned) or \
-               is_timestamp_row(cleaned) or \
-               is_page_number_row(cleaned) or \
-               is_cut_order_header_row(cleaned):
+            # 1. Check for junk rows on the raw row first.
+            if is_whitespace_row(raw_row) or \
+               is_general_title_row(raw_row) or \
+               is_timestamp_row(raw_row) or \
+               is_page_number_row(raw_row):
                 continue
 
-            # Check for age/gender header to update the context
-            if is_age_gender_header_row(cleaned):
-                left_context = cleaned[0]
-                right_context = cleaned[2]
+            # 2. Check for age/gender header on the raw row.
+            new_left, new_right = parse_age_gender_header(raw_row)
+            if new_left:
+                left_context, right_context = new_left, new_right
                 print(f"Context updated: {left_context} | {right_context}")
                 continue
 
-            # Process as a potential data row
+            # 3. If it's not a junk or context row, perform full cleaning.
+            cleaned = clean_row(raw_row)
+
+            # After cleaning, the row might be empty.
+            if not cleaned:
+                continue
+
+            # 4. Check for the "Cut order" header on the cleaned row.
+            if is_cut_order_header_row(cleaned):
+                continue
+
+            # 5. Process as a potential data row.
             is_valid_data, reason = is_data_row(cleaned)
             if is_valid_data:
                 if not left_context or not right_context:
