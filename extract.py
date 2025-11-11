@@ -12,7 +12,11 @@ def extract_tables_from_pdf(pdf_path):
         with pdfplumber.open(pdf_path) as pdf:
             for i, page in enumerate(pdf.pages):
                 print(f"\n--- Page {i+1} ---")
-                tables = page.extract_tables()
+                # Use the "text" strategy for tables defined by whitespace alignment
+                table_settings = {
+                    "strategy": "text",
+                }
+                tables = page.extract_tables(table_settings)
                 if tables:
                     print(f"Found {len(tables)} table(s) on page {i+1}.")
                     for j, table in enumerate(tables):
