@@ -18,7 +18,6 @@ Processing page 14...
 
 --- Flagged Rows for Review ---
 Table 1, Row 1: ['U', 'SA Swi', 'mming', '2024-', '2028', 'Single Ag', 'e Moti', 'vation', 'al Stan', 'dards'] - Reason: Incorrect number of columns
-Table 1, Row 3: ['10/10/2025', '12:58:55 AM'] - Reason: Incorrect number of columns
 Table 1, Row 5: ['B', 'BB', 'A', 'AA', 'AAA', 'AAAA', 'AAAA', 'AAA', 'AA', 'A', 'BB', 'B'] - Reason: Incorrect number of columns
 Table 1, Row 7: ['10 G', 'irls', 'Event', '10 B', 'oys'] - Reason: Incorrect number of columns
 Table 1, Row 9: ['39.89 *', '36.09 *', '32.19 *', '30.89 *', '29.69 *', '28.39 *', '50 FR SCY', '27.59 *', '28.79 *', '29.99 *', '31.19 *', '34.79 *', '38.29 *'] - Reason: Data row found without age/gender context
