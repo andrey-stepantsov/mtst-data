@@ -1,6 +1,10 @@
 import re
 import pdfplumber
 
+# These are the standard names for the columns, based on the "Cut order" header.
+CUT_ORDER_LABELS_LEFT = ["B", "BB", "A", "AA", "AAA", "AAAA"]
+CUT_ORDER_LABELS_RIGHT = ["AAAA", "AAA", "AA", "A", "BB", "B"]
+
 def parse_time_to_seconds(time_str):
     """
     Parses a time string (M:SS.ss or SS.ss) into total seconds.
@@ -84,6 +88,20 @@ def clean_row(row):
             items.pop(i+1)
             continue
 
+        # Merge pattern: "10", "&", "under"
+        if current == "10" and next_item == "&" and i + 2 < len(items) and items[i+2] == "under":
+            items[i] = "10 & under"
+            items.pop(i+1)
+            items.pop(i+1)
+            continue
+
+        # Merge pattern: Age and Gender (e.g., "10", "Girls" or "11-12", "Boys")
+        age_pattern = re.compile(r"^\d+(?:-\d+)?$") # Matches "10", "11-12"
+        if (age_pattern.match(current) or current == "10 & under") and next_item in ("Girls", "Boys"):
+            items[i] = f"{current} {next_item}"
+            items.pop(i+1)
+            continue
+
         i += 1
     return items
 
@@ -130,26 +148,25 @@ def is_data_row(row):
     if len(row) != 13:
         return False, "Incorrect number of columns"
 
-    # The middle column (index 6) must be the event name.
+    # Check event format
     event = row[6]
-    if not event or not any(char.isalpha() for char in event):
-        return False, "Blank or invalid event cell"
-    
+    event_pattern = re.compile(r'^\d{2,4}\s+(FR|BK|BR|FL|IM)\s+(SCY|SCM|LCM)$')
+    if not event_pattern.match(event):
+        return False, f"Invalid event format: {event}"
+
     standards_left = row[:6]
     standards_right = row[7:]
+    time_columns = standards_left + standards_right
 
-    # Check if all standards columns contain digits and convert to seconds for comparison
-    parsed_left = []
-    for item in standards_left:
-        if item and not any(char.isdigit() for char in item.replace('*', '')):
-            return False, f"Non-time value in left standards column: {item}"
-        parsed_left.append(parse_time_to_seconds(item))
+    # Check time format
+    time_pattern = re.compile(r'^(?:\d{1,2}:)?\d{2}\.\d{2}(?:\s+\*)?$')
+    for item in time_columns:
+        if item and not time_pattern.match(item):
+            return False, f"Invalid time format in standards column: {item}"
 
-    parsed_right = []
-    for item in standards_right:
-        if item and not any(char.isdigit() for char in item.replace('*', '')):
-            return False, f"Non-time value in right standards column: {item}"
-        parsed_right.append(parse_time_to_seconds(item))
+    # Convert to seconds for order comparison
+    parsed_left = [parse_time_to_seconds(t) for t in standards_left]
+    parsed_right = [parse_time_to_seconds(t) for t in standards_right]
 
     # Check descending order for left 6 standards (ignoring None values)
     comparable_left = [t for t in parsed_left if t is not None]
@@ -165,59 +182,86 @@ def is_data_row(row):
             
     return True, None
 
-def process_and_clean_tables(raw_tables):
+def parse_and_structure_data(raw_tables):
     """
-    Takes raw extracted tables, cleans them, filters for data rows, and prints them.
+    Takes raw extracted tables, cleans them, and builds a structured list of data records.
+    Each record contains the age/gender context and the standards for an event.
     """
-    print("\n--- Cleaning Data and Filtering for Data Rows ---")
-    all_data_rows = []
+    print("\n--- Parsing and Structuring Data ---")
+    structured_data = []
     flagged_rows = []
     
+    # State variables to hold the current context
+    left_context, right_context = None, None
+
     for table_idx, table in enumerate(raw_tables):
         for row_idx, raw_row in enumerate(table):
             cleaned = clean_row(raw_row)
 
-            if is_whitespace_row(cleaned):
-                continue
-            if is_general_title_row(cleaned):
-                print(f"Skipping general title row: {cleaned}")
-                continue
-            if is_timestamp_row(cleaned):
-                print(f"Skipping timestamp row: {cleaned}")
-                continue
-            if is_page_number_row(cleaned):
-                print(f"Skipping page number row: {cleaned}")
-                continue
-            if is_cut_order_header_row(cleaned):
-                print(f"Skipping cut order header row: {cleaned}")
-                continue
-            if is_age_gender_header_row(cleaned):
-                print(f"Skipping age and gender header row: {cleaned}")
+            # Skip junk rows
+            if is_whitespace_row(cleaned) or \
+               is_general_title_row(cleaned) or \
+               is_timestamp_row(cleaned) or \
+               is_page_number_row(cleaned) or \
+               is_cut_order_header_row(cleaned):
                 continue
 
+            # Check for age/gender header to update the context
+            if is_age_gender_header_row(cleaned):
+                left_context = cleaned[0]
+                right_context = cleaned[2]
+                print(f"Context updated: {left_context} | {right_context}")
+                continue
+
+            # Process as a potential data row
             is_valid_data, reason = is_data_row(cleaned)
             if is_valid_data:
-                all_data_rows.append(cleaned)
+                if not left_context or not right_context:
+                    reason = "Data row found without age/gender context"
+                    flagged_rows.append((cleaned, reason, table_idx, row_idx))
+                    continue
+                
+                event = cleaned[6]
+                
+                # Create record for the left context (e.g., Girls)
+                left_standards = {label: time for label, time in zip(CUT_ORDER_LABELS_LEFT, cleaned[:6]) if time}
+                if left_standards:
+                    structured_data.append({
+                        "age_gender_group": left_context,
+                        "event": event,
+                        "standards": left_standards
+                    })
+
+                # Create record for the right context (e.g., Boys)
+                right_standards = {label: time for label, time in zip(CUT_ORDER_LABELS_RIGHT, cleaned[7:]) if time}
+                if right_standards:
+                    structured_data.append({
+                        "age_gender_group": right_context,
+                        "event": event,
+                        "standards": right_standards
+                    })
             else:
+                # It's not a header, not data, not junk we know about. Flag it.
                 flagged_rows.append((cleaned, reason, table_idx, row_idx))
-                # print(f"Flagged row (Table {table_idx+1}, Row {row_idx+1}): {cleaned} - Reason: {reason}")
-    
-    # Print the cleaned data rows to inspect them
-    print("\n--- Valid Data Rows ---")
-    for row in all_data_rows:
-        print(row)
-    
+
     if flagged_rows:
         print("\n--- Flagged Rows for Review ---")
         for row, reason, table_idx, row_idx in flagged_rows:
             print(f"Table {table_idx+1}, Row {row_idx+1}: {row} - Reason: {reason}")
-        
-    return all_data_rows
+
+    return structured_data
 
 if __name__ == "__main__":
     pdf_file_path = "data/2028-motivational-standards-single-age.pdf"
     raw_tables = extract_tables_from_pdf(pdf_path=pdf_file_path)
     
     if raw_tables:
-        cleaned_data = process_and_clean_tables(raw_tables)
-        print(f"\nFound {len(cleaned_data)} valid data rows.")
+        structured_data = parse_and_structure_data(raw_tables)
+        print(f"\n--- Found {len(structured_data)} structured data records ---")
+        
+        # Example of how to print the structured data
+        for record in structured_data[:5]: # Print first 5 records as a sample
+            print(record)
+        
+        if len(structured_data) > 5:
+            print(f"... and {len(structured_data) - 5} more records.")
