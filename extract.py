@@ -75,8 +75,13 @@ def clean_row(items):
 
         # Merge pattern: Time split across two cells (e.g., "2", ":17.99")
         if i + 1 < len(items) and items[i].isdigit() and items[i+1].startswith(':'):
-            new_items.append(items[i] + items[i+1])
+            merged_time = items[i] + items[i+1]
             i += 2
+            # Check if the next item is an asterisk
+            if i < len(items) and items[i] == '*':
+                merged_time += " *"
+                i += 1
+            new_items.append(merged_time)
             continue
 
         # Merge pattern: Time followed by a "*"
@@ -129,7 +134,7 @@ def parse_age_gender_header(line_text):
     Example format: "10 Girls      Event      10 Boys"
     """
     # This pattern is more flexible about the spacing around "Event"
-    age_gender_pattern = r"(\d+ & under|\d+-\d+|\d+)\s+(Girls|Boys)"
+    age_gender_pattern = r"(\d+ & over|\d+ & under|\d+-\d+|\d+)\s+(Girls|Boys)"
     full_pattern = re.compile(rf"^{age_gender_pattern}\s+(?:Event\s+)?{age_gender_pattern}$")
     
     match = full_pattern.match(line_text.strip())
