@@ -231,10 +231,15 @@ def parse_and_structure_data(text_lines):
             
             event = cleaned[6]
             
+            # Split contexts into age and gender
+            left_age, left_gender = left_context.rsplit(' ', 1)
+            right_age, right_gender = right_context.rsplit(' ', 1)
+
             left_standards = {label: time for label, time in zip(CUT_ORDER_LABELS_LEFT, cleaned[:6]) if time}
             if left_standards:
                 structured_data.append({
-                    "age_gender_group": left_context,
+                    "age": left_age,
+                    "gender": left_gender,
                     "event": event,
                     "standards": left_standards
                 })
@@ -242,7 +247,8 @@ def parse_and_structure_data(text_lines):
             right_standards = {label: time for label, time in zip(CUT_ORDER_LABELS_RIGHT, cleaned[7:]) if time}
             if right_standards:
                 structured_data.append({
-                    "age_gender_group": right_context,
+                    "age": right_age,
+                    "gender": right_gender,
                     "event": event,
                     "standards": right_standards
                 })
