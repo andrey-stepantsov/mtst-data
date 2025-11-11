@@ -20,6 +20,8 @@ The "Age and Gender" header row contains information about the age and gender of
 - "11-12 Girls, 11-12 Boys"
 - "11 Girls, 11 Boys"
 
+The dash separated pairs are used a file where age groups that span multiple years, while single numbers are used for single-year age groups.
+
 ## Event column
 
 The "Event" column contains the name of the swimming event. The event names may include various distances and styles, such as "50 FR LCM", "100 BK SCY", "200 IM LCM", etc.
@@ -38,7 +40,7 @@ There always 12 standards columns in total, 6 to the left of the "Event" column 
 
 The asterisk symbol (*) may appear next to some time values, following the value, indicating a special note or condition associated with that standard. The asterisk should be preserved during the extraction process.
 
-## Staddards sanity check
+## Standards sanity check
 
 Each data row should contain exactly 13 cells: 12 standards cells and 1 event cell. The event cell should always be located in the middle of the row, with 6 standards cells to its left and 6 standards cells to its right. If a row does not conform to this structure, it should be flagged for review.
 
