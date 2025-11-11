@@ -14,7 +14,8 @@ def extract_tables_from_pdf(pdf_path):
                 print(f"\n--- Page {i+1} ---")
                 # Use the "text" strategy for tables defined by whitespace alignment
                 table_settings = {
-                    "strategy": "text",
+                    "vertical_strategy": "text",
+                    "horizontal_strategy": "text",
                 }
                 tables = page.extract_tables(table_settings)
                 if tables:
