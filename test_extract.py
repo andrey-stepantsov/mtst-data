@@ -154,84 +154,6 @@ def test_parse_and_structure_data():
     structured_data = parse_and_structure_data(sample_lines)
     assert structured_data == expected_data
 
-@pytest.mark.parametrize("json_file_name", [
-    "2028-motivational-standards-single-age",
-    "2028-motivational-standards-age-group",
-])
-def test_data_integrity(json_file_name):
-    """
-    Loads the golden JSON files and performs data integrity checks:
-    1. Times must be monotonically decreasing from B to AAAA.
-    2. All expected genders (Girls, Boys) must be present.
-    3. All expected age groups for that file type must be present.
-    """
-    json_path = f"test/data/{json_file_name}.json"
-    with open(json_path, 'r') as f:
-        data = json.load(f)
-
-    found_genders = set()
-    found_ages = set()
-
-    for record in data:
-        found_genders.add(record["gender"])
-        found_ages.add(record["age"])
-
-        # Check 1: Verify that times are monotonically decreasing
-        standards = record["standards"]
-        times_in_seconds = [parse_time_to_seconds(standards.get(cut)) for cut in CUT_ORDER]
-        
-        # Filter out None values for events that don't have all standards
-        valid_times = [t for t in times_in_seconds if t is not None]
-
-        for i in range(1, len(valid_times)):
-            # Each time must be less than or equal to the previous (slower) one
-            assert valid_times[i] <= valid_times[i-1], (
-                f"Time standards are not decreasing for {record['age']} {record['gender']} {record['event']}. "
-                f"Got {valid_times[i-1]} for {CUT_ORDER[i-1]} and {valid_times[i]} for {CUT_ORDER[i]}."
-            )
-
-    # Check 2: Verify all genders are present
-    assert found_genders == {"Girls", "Boys"}, f"Missing or unexpected genders in {json_file_name}.json"
-
-    # Check 3: Verify all age groups are present for the file type
-    expected_age_set = EXPECTED_AGES[json_file_name]
-    assert found_ages == expected_age_set, f"Missing or unexpected age groups in {json_file_name}.json"
-
-@pytest.mark.parametrize("pdf_name", [
-    "2028-motivational-standards-single-age",
-    "2028-motivational-standards-age-group",
-])
-def test_end_to_end_extraction(pdf_name, tmp_path):
-    """
-    Tests the full extraction process from PDF to JSON and compares the
-    output to a known-good "golden" file.
-    """
-    input_pdf = f"data/{pdf_name}.pdf"
-    golden_json_path = f"test/data/{pdf_name}.json"
-    output_json_path = tmp_path / f"{pdf_name}.json"
-
-    # Run the extraction script as a subprocess
-    result = subprocess.run(
-        ["python", "extract.py", input_pdf, str(output_json_path)],
-        capture_output=True,
-        text=True
-    )
-
-    # Ensure the script ran successfully
-    assert result.returncode == 0, f"Script failed for {pdf_name}: {result.stderr}"
-    assert output_json_path.exists(), "Output JSON file was not created."
-
-    # Load the contents of the newly generated JSON file
-    with open(output_json_path, 'r') as f:
-        generated_data = json.load(f)
-
-    # Load the contents of the "golden" JSON file
-    with open(golden_json_path, 'r') as f:
-        golden_data = json.load(f)
-
-    # Compare the data
-    assert generated_data == golden_data, "Generated JSON does not match the golden file."
-
 def test_parse_and_structure_data_age_group():
     """
     Tests the parsing and structuring of data from the age-group PDF format,
@@ -281,3 +203,84 @@ def test_parse_and_structure_data_age_group():
 
     structured_data = parse_and_structure_data(sample_lines)
     assert structured_data == expected_data
+
+
+@pytest.mark.parametrize("pdf_name", [
+    "2028-motivational-standards-single-age",
+    "2028-motivational-standards-age-group",
+])
+def test_end_to_end_extraction(pdf_name, tmp_path):
+    """
+    Tests the full extraction process from PDF to JSON and compares the
+    output to a known-good "golden" file.
+    """
+    input_pdf = f"data/{pdf_name}.pdf"
+    golden_json_path = f"test/data/{pdf_name}.json"
+    output_json_path = tmp_path / f"{pdf_name}.json"
+
+    # Run the extraction script as a subprocess
+    result = subprocess.run(
+        ["python", "extract.py", input_pdf, str(output_json_path)],
+        capture_output=True,
+        text=True
+    )
+
+    # Ensure the script ran successfully
+    assert result.returncode == 0, f"Script failed for {pdf_name}: {result.stderr}"
+    assert output_json_path.exists(), "Output JSON file was not created."
+
+    # Load the contents of the newly generated JSON file
+    with open(output_json_path, 'r') as f:
+        generated_data = json.load(f)
+
+    # Load the contents of the "golden" JSON file
+    with open(golden_json_path, 'r') as f:
+        golden_data = json.load(f)
+
+    # Compare the data
+    assert generated_data == golden_data, "Generated JSON does not match the golden file."
+
+@pytest.mark.parametrize("json_file_name", [
+    "2028-motivational-standards-single-age",
+    "2028-motivational-standards-age-group",
+])
+def test_data_integrity(json_file_name):
+    """
+    Loads the golden JSON files and performs data integrity checks:
+    1. Times must be monotonically decreasing from B to AAAA.
+    2. All expected genders (Girls, Boys) must be present.
+    3. All expected age groups for that file type must be present.
+    """
+    json_path = f"test/data/{json_file_name}.json"
+    with open(json_path, 'r') as f:
+        data = json.load(f)
+
+    found_genders = set()
+    found_ages = set()
+
+    for record in data:
+        found_genders.add(record["gender"])
+        found_ages.add(record["age"])
+
+        # Check 1: Verify that times are monotonically decreasing
+        standards = record["standards"]
+        times_in_seconds = [parse_time_to_seconds(standards.get(cut)) for cut in CUT_ORDER]
+        
+        # Filter out None values for events that don't have all standards
+        valid_times = [t for t in times_in_seconds if t is not None]
+
+        for i in range(1, len(valid_times)):
+            # Each time must be less than or equal to the previous (slower) one
+            assert valid_times[i] <= valid_times[i-1], (
+                f"Time standards are not decreasing for {record['age']} {record['gender']} {record['event']}.\n"
+                f"  - Got {valid_times[i-1]} for {CUT_ORDER[i-1]}.\n"
+                f"  - Got {valid_times[i]} for {CUT_ORDER[i]}."
+            )
+
+    # Check 2: Verify all genders are present
+    assert found_genders == {"Girls", "Boys"}, f"Missing or unexpected genders in {json_file_name}.json"
+
+    # Check 3: Verify all age groups are present for the file type
+    expected_age_set = EXPECTED_AGES[json_file_name]
+    assert found_ages == expected_age_set, f"Missing or unexpected age groups in {json_file_name}.json"
+
