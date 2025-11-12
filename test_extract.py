@@ -14,6 +14,18 @@ from extract import (
     parse_and_structure_data,
 )
 
+# --- Constants for Data Integrity Checks ---
+CUT_ORDER = ["B", "BB", "A", "AA", "AAA", "AAAA"]
+
+EXPECTED_AGES = {
+    "2028-motivational-standards-single-age": {
+        "10", "11", "12", "13", "14", "15", "16", "17", "18"
+    },
+    "2028-motivational-standards-age-group": {
+        "10 & under", "11-12", "13-14", "15-16", "17-18"
+    },
+}
+
 # --- Test Utility Functions ---
 
 @pytest.mark.parametrize("time_str, expected", [
