@@ -152,7 +152,7 @@ def test_end_to_end_extraction(pdf_name, tmp_path):
     output to a known-good "golden" file.
     """
     input_pdf = f"data/{pdf_name}.pdf"
-    golden_json_path = f"tests/data/{pdf_name}.json"
+    golden_json_path = f"test/data/{pdf_name}.json"
     output_json_path = tmp_path / f"{pdf_name}.json"
 
     # Run the extraction script as a subprocess
