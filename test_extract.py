@@ -1,3 +1,5 @@
+import subprocess
+import json
 import pytest
 from extract import (
     parse_time_to_seconds,
@@ -50,9 +52,14 @@ def test_is_whitespace_row():
     assert is_whitespace_row("   \t\n") is True
     assert is_whitespace_row("not empty") is False
 
-def test_is_general_title_row():
-    assert is_general_title_row("USA Swimming 2024-2028 Single Age Motivational Standards") is True
-    assert is_general_title_row("Some other title") is False
+@pytest.mark.parametrize("line, expected", [
+    ("USA Swimming 2024-2028 Motivational Standards", True),
+    ("2028-motivational-standards-age-group", True),
+    ("some other title", False),
+    ("MOTIVATIONAL", True),
+])
+def test_is_general_title_row(line, expected):
+    assert is_general_title_row(line) == expected
 
 def test_is_timestamp_row():
     assert is_timestamp_row("Generated 09/01/2023 10:30:00 AM") is True
@@ -134,6 +141,41 @@ def test_parse_and_structure_data():
 
     structured_data = parse_and_structure_data(sample_lines)
     assert structured_data == expected_data
+
+@pytest.mark.parametrize("pdf_name", [
+    "2028-motivational-standards-single-age",
+    "2028-motivational-standards-age-group",
+])
+def test_end_to_end_extraction(pdf_name, tmp_path):
+    """
+    Tests the full extraction process from PDF to JSON and compares the
+    output to a known-good "golden" file.
+    """
+    input_pdf = f"data/{pdf_name}.pdf"
+    golden_json_path = f"tests/data/{pdf_name}.json"
+    output_json_path = tmp_path / f"{pdf_name}.json"
+
+    # Run the extraction script as a subprocess
+    result = subprocess.run(
+        ["python", "extract.py", input_pdf, str(output_json_path)],
+        capture_output=True,
+        text=True
+    )
+
+    # Ensure the script ran successfully
+    assert result.returncode == 0, f"Script failed for {pdf_name}: {result.stderr}"
+    assert output_json_path.exists(), "Output JSON file was not created."
+
+    # Load the contents of the newly generated JSON file
+    with open(output_json_path, 'r') as f:
+        generated_data = json.load(f)
+
+    # Load the contents of the "golden" JSON file
+    with open(golden_json_path, 'r') as f:
+        golden_data = json.load(f)
+
+    # Compare the data
+    assert generated_data == golden_data, "Generated JSON does not match the golden file."
 
 def test_parse_and_structure_data_age_group():
     """
