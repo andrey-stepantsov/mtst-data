@@ -51,3 +51,42 @@ In a given row, the time values in the left 6 standards cells should be in desce
 ## Data to ignore
 
 General Title rows, whitespace rows, rows contaning timestamps, and page numbering rows should be ignored during the extraction process. The general title rows typically contain text "USA Swimming 2024-2028 Motivational Standards". The page numbering rows contain text in a form of a pattern "Page K of N" where "K" and "N" are integer numbers.
+
+## Usage
+
+This section describes how to set up the environment, run the data extraction utility, and execute the test suite.
+
+## Setup
+
+It is recommended to use a Python virtual environment to manage project dependencies.
+
+### **Create and activate a virtual environment:**
+
+ For macOS/Linux:
+
+ ```bash
+ python3 -m venv .venv 
+ source .venv/bin/activate 
+ ```
+
+ For Windows:
+
+ ```bash
+ python -m venv .venv 
+ .venv\Scripts\activate 
+ ```
+
+### **Install the required dependencies:**
+
+ ```bash
+ pip install -r requirements.txt 
+ ```
+
+## Running the Extractor
+
+The `extract.py` script takes the input PDF file path and the desired output JSON file path as command-line arguments.
+
+### Syntax
+
+```bash
+python extract.py [path_to_input_pdf] [path_to_output_json]
